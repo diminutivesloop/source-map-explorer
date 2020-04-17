@@ -19,6 +19,12 @@
   background: #eee;
 }
 
+.webtreemap-node:focus {
+  /* Prevent clipping of focus outline */
+  outline-width: 3px;
+  outline-offset: -3px; 
+}
+
 /* Optional: Different background colors depending on symbol. */
 .webtreemap-symbol-bss {
   background: #66C2A5;

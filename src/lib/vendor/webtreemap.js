@@ -59,12 +59,19 @@ function focus(tree) {
   }
   // And layout into the topmost box.
   layout(tree, level, width, height);
+
+  // Update keyboard focus
+  setTimeout(() => {
+    tree.dom.focus();
+  });
 }
 
 function makeDom(tree, level) {
   var dom = document.createElement('div');
   dom.style.zIndex = 1;
-  dom.className = 'webtreemap-node webtreemap-level' + Math.min(level, 4);
+  var level = Math.min(level, 4);
+  tree.level = level;
+  dom.className = 'webtreemap-node webtreemap-level' + level;
   if (tree.data['$symbol']) {
     dom.className += (' webtreemap-symbol-' +
   tree.data['$symbol'].replace(' ', '_'));
@@ -74,10 +81,12 @@ function makeDom(tree, level) {
   tree.data['$dominant_symbol'].replace(' ', '_'));
     dom.className += (' webtreemap-aggregate');
   }
+  dom.tabIndex = 0;
 
-  dom.onmousedown = function(e) {
-    if (e.button == 0) {
-      if (focused && tree == focused && focused.parent) {
+  // Handle primary click or enter keydown
+  dom.onkeydown = dom.onmousedown = function(e) {
+    if (e.button === 0 || e.keyCode === 13) {
+      if (focused && tree === focused && focused.parent) {
         focus(focused.parent);
       } else {
         focus(tree);
@@ -85,6 +94,16 @@ function makeDom(tree, level) {
     }
     e.stopPropagation();
     return true;
+  };
+
+  dom.onfocus = function (e) {
+    if (focused) {
+      if (tree.level === focused.level && tree.dom !== focused.dom) {
+      document.getElementById('focus-anchor-start').focus();
+      } else if (tree.level < focused.level) {
+        focused.dom.focus();
+      }
+    }
   };
 
   var caption = document.createElement('div');
@@ -241,6 +260,12 @@ function layout(tree, level, width, height) {
 }
 
 function appendTreemap(dom, data) {
+  // element to receive focus when skipping hidden nodes
+  var focusAnchorStart = document.createElement('div');
+  focusAnchorStart.tabIndex = -1;
+  focusAnchorStart.id = 'focus-anchor-start';
+  dom.appendChild(focusAnchorStart);
+
   var style = getComputedStyle(dom, null);
   var width = parseInt(style.width);
   var height = parseInt(style.height);
@@ -249,6 +274,12 @@ function appendTreemap(dom, data) {
   dom.appendChild(data.dom);
   position(data.dom, 0, 0, width, height);
   layout(data, 0, width, height);
+
+  // element to receive focus when skipping hidden nodes
+  var focusAnchorEnd = document.createElement('div');
+  focusAnchorEnd.tabIndex = 0;
+  focusAnchorEnd.id = 'focus-anchor-end';
+  dom.appendChild(focusAnchorEnd);
 }
 
 window.appendTreemap = appendTreemap;
